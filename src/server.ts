@@ -54,9 +54,14 @@ const rezepte: Rezept[] = [
   },
 ];
 
-// Endpunkt 1 — alle Rezepte
+// Endpunkt 1 — alle Rezepte (optional gefiltert per ?maxMinuten=)
 app.get("/recipes", (req, res) => {
-  res.json(rezepte);
+  const maxMinuten = Number(req.query.maxMinuten);
+  const ergebnis =
+    req.query.maxMinuten && !Number.isNaN(maxMinuten)
+      ? rezepte.filter((r) => r.minuten <= maxMinuten)
+      : rezepte;
+  res.json(ergebnis);
 });
 
 // Endpunkt 2 — ein Rezept über die ID
