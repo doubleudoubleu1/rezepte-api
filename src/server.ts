@@ -59,6 +59,17 @@ app.get("/recipes", (req, res) => {
   res.json(rezepte);
 });
 
+// Endpunkt 2 — ein Rezept über die ID
+app.get("/recipes/:id", (req, res) => {
+  const id = Number(req.params.id); // String → Zahl!
+  const rezept = rezepte.find((r) => r.id === id);
+
+  if (!rezept) {
+    return res.status(404).json({ fehler: "Rezept nicht gefunden" });
+  }
+  res.json(rezept);
+});
+
 const PORT = 3000;
 app.listen(PORT, () => {
   console.log(`Server läuft auf http://localhost:${PORT}`);
