@@ -16,6 +16,11 @@ app.get("/health", (req, res) => {
 
 app.use("/recipes", recipeRoutes);
 
+// 404-Fallback für unbekannte Routen (z. B. Tippfehler im Pfad)
+app.use((req, res) => {
+  res.status(404).json({ fehler: `Route ${req.method} ${req.originalUrl} existiert nicht` });
+});
+
 app.use(errorHandler);                 // muss NACH den Routen stehen
 
 export default app;
