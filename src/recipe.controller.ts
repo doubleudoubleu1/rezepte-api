@@ -13,11 +13,7 @@ export async function getRecipesHandler(req: Request, res: Response, next: NextF
 export async function getRecipeHandler(req: Request, res: Response, next: NextFunction) {
   try {
     const id = Number(req.params.id);
-    const rezept = await getRecipeById(id);
-
-    if (!rezept) {
-      return res.status(404).json({ fehler: "Rezept nicht gefunden" });
-    }
+    const rezept = await getRecipeById(id);   // wirft RecipeNotFoundError bei fehlender ID
     res.json(rezept);
   } catch (err) {
     next(err);
@@ -45,4 +41,4 @@ export async function deleteRecipeHandler(req: Request, res: Response, next: Nex
   } catch (err) {
     next(err);
   }
-}
+}

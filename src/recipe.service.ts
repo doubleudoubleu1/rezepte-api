@@ -1,3 +1,5 @@
+import { RecipeNotFoundError } from "./errors";
+
 export type Rezept = { id: number; titel: string; minuten: number; portionen: number };
 
 let rezepte: Rezept[] = [
@@ -9,8 +11,13 @@ export async function getAllRecipes(): Promise<Rezept[]> {
   return rezepte;
 }
 
-export async function getRecipeById(id: number): Promise<Rezept | null> {
-  return rezepte.find((r) => r.id === id) ?? null;
+export async function getRecipeById(id: number): Promise<Rezept> {
+  const rezept = rezepte.find((r) => r.id === id);
+
+  if (!rezept) {
+    throw new RecipeNotFoundError(id);
+  }
+  return rezept;
 }
 
 let naechsteId = 3;
@@ -25,4 +32,4 @@ export async function deleteRecipe(id: number): Promise<boolean> {
   const laengeVorher = rezepte.length;
   rezepte = rezepte.filter((r) => r.id !== id);
   return rezepte.length < laengeVorher;
-}
+}
