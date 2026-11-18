@@ -16,6 +16,11 @@ app.get("/health", (req, res) => {
 
 app.use("/recipes", recipeRoutes);
 
+// Bewusst kaputte Route: beweist, dass die Error-Middleware den Server stabil hält
+app.get("/crash", () => {
+  throw new Error("Absichtlicher Absturz zum Testen");
+});
+
 // 404-Fallback für unbekannte Routen (z. B. Tippfehler im Pfad)
 app.use((req, res) => {
   res.status(404).json({ fehler: `Route ${req.method} ${req.originalUrl} existiert nicht` });
