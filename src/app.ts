@@ -8,7 +8,7 @@ app.use(express.json());
 app.use(logger);              
 
 app.get("/", (req, res) => {
-  res.send("Willkommen bei der Rezepte-API 👋");
+  res.send("Willkommen bei der Rezepte-API 👋 — live auf Vercel");
 });
 app.get("/health", (req, res) => {
   res.json({ status: "ok" });
