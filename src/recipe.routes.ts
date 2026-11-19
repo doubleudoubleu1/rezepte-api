@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { getRecipesHandler, getRecipeHandler, createRecipeHandler, deleteRecipeHandler } from "./recipe.controller";
-import { requireApiKey } from "./auth.middleware";
+import { getRecipesHandler, getRecipeHandler, createRecipeHandler, deleteRecipeHandler } from "./recipe.controller.ts";
+import { requireApiKey } from "./auth.middleware.ts";
 
 const router = Router();
 router.get("/", getRecipesHandler);
