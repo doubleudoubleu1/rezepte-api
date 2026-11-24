@@ -1,0 +1,97 @@
+=== 1. Container starten ===
+
+$ docker compose up -d
+71351f08f4be0e8675d0c8c35c7613b37a8e247e1a346e87ae06592cfa6e2b63
+pg-db
+
+$ docker ps
+CONTAINER ID  IMAGE                  COMMAND     CREATED             STATUS             PORTS                   NAMES
+0165e313e188  localhost/postgres:18  postgres    About a minute ago  Up About a minute  0.0.0.0:5432->5432/tcp  pg-db
+
+=== 2. schema.sql einspielen (Weg B) ===
+
+$ docker compose exec -T db psql -U admin -d syntax_db < schema.sql
+CREATE TABLE
+CREATE TABLE
+CREATE TABLE
+INSERT 0 3
+INSERT 0 7
+INSERT 0 9
+
+=== 3. Tabellen und Daten prüfen ===
+
+$ docker compose exec -T db psql -U admin -d syntax_db -c "\dt"
+             List of tables
+ Schema |      Name      | Type  | Owner 
+--------+----------------+-------+-------
+ public | rezept_zutaten | table | admin
+ public | rezepte        | table | admin
+ public | zutaten        | table | admin
+(3 rows)
+
+$ docker compose exec -T db psql -U admin -d syntax_db -c "\d rezept_zutaten"
+                    Table "public.rezept_zutaten"
+  Column   |          Type          | Collation | Nullable | Default 
+-----------+------------------------+-----------+----------+---------
+ rezept_id | integer                |           | not null | 
+ zutat_id  | integer                |           | not null | 
+ menge     | character varying(100) |           |          | 
+Indexes:
+    "rezept_zutaten_pkey" PRIMARY KEY, btree (rezept_id, zutat_id)
+Foreign-key constraints:
+    "rezept_zutaten_rezept_id_fkey" FOREIGN KEY (rezept_id) REFERENCES rezepte(id) ON DELETE CASCADE
+    "rezept_zutaten_zutat_id_fkey" FOREIGN KEY (zutat_id) REFERENCES zutaten(id)
+
+$ docker compose exec -T db psql -U admin -d syntax_db -c "SELECT * FROM rezepte;"
+ id |         titel         | minuten | portionen | vegetarisch |          erstellt_am          
+----+-----------------------+---------+-----------+-------------+-------------------------------
+  1 | Spaghetti Carbonara   |      20 |         2 | f           | 2026-11-25 08:52:38.055945+00
+  2 | Linsen-Curry          |      35 |         4 | t           | 2026-11-25 08:52:38.055945+00
+  3 | Omelette mit Zwiebeln |      10 |         1 | t           | 2026-11-25 08:52:38.055945+00
+(3 rows)
+
+$ docker compose exec -T db psql -U admin -d syntax_db -c "SELECT r.titel, z.name, rz.menge FROM rezepte r JOIN rezept_zutaten rz ON rz.rezept_id = r.id JOIN zutaten z ON z.id = rz.zutat_id;"
+         titel         |    name    |  menge  
+-----------------------+------------+---------
+ Spaghetti Carbonara   | Spaghetti  | 200 g
+ Spaghetti Carbonara   | Ei         | 2 Stück
+ Spaghetti Carbonara   | Speck      | 100 g
+ Linsen-Curry          | Linsen     | 250 g
+ Linsen-Curry          | Kokosmilch | 400 ml
+ Linsen-Curry          | Zwiebel    | 1 Stück
+ Omelette mit Zwiebeln | Ei         | 2 Stück
+ Omelette mit Zwiebeln | Zwiebel    | 1 Stück
+ Omelette mit Zwiebeln | Milch      | 50 ml
+(9 rows)
+
+=== 4. Persistenz beweisen: down, up, Daten müssen weiter da sein ===
+
+$ docker compose down
+pg-db
+pg-db
+1897b3b436259f1df3645470576f14919dd647f59c39cd672f0027729048f4c3
+rezepte-api_default
+
+$ docker compose up -d
+71351f08f4be0e8675d0c8c35c7613b37a8e247e1a346e87ae06592cfa6e2b63
+51cac57ec1ab9f54f47066225321b85ae8de5d8783c972a794512a32bf7296ce
+da14ca596d8091f4a10e77e3c3c6439a10d40bf44a2544fff8faf0928e841429
+pg-db
+
+$ docker compose exec -T db psql -U admin -d syntax_db -c "SELECT * FROM rezepte;"
+ id |         titel         | minuten | portionen | vegetarisch |          erstellt_am          
+----+-----------------------+---------+-----------+-------------+-------------------------------
+  1 | Spaghetti Carbonara   |      20 |         2 | f           | 2026-11-25 08:52:38.055945+00
+  2 | Linsen-Curry          |      35 |         4 | t           | 2026-11-25 08:52:38.055945+00
+  3 | Omelette mit Zwiebeln |      10 |         1 | t           | 2026-11-25 08:52:38.055945+00
+(3 rows)
+
+=== 5. Volume: Daten liegen außerhalb des Containers ===
+
+$ docker volume ls
+DRIVER      VOLUME NAME
+local       dev-cube_traefik-config
+local       dev-cube_open-webui-data
+local       754dfaba318e95653dfcc05aa421ed01cff27feea757dd4a820236b8303df5b9
+local       61fdd0d39805fec65472516c59c02ec43fa8978c5ca578f1c6ca972ac8b04746
+local       rezepte-api_pgdata
