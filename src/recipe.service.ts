@@ -1,18 +1,30 @@
 import { RecipeNotFoundError, ValidationError } from "./errors.ts";
 
-export type Rezept = { id: number; titel: string; minuten: number; portionen: number };
+export type Zutat = { name: string; menge: string };
 
-let rezepte: Rezept[] = [
-  { id: 1, titel: "Spaghetti Carbonara", minuten: 20, portionen: 2 },
-  { id: 2, titel: "Linsen-Curry",        minuten: 35, portionen: 4 },
-];
+export type Rezept = {
+  id: number;
+  titel: string;
+  minuten: number;
+  portionen: number;
+  zutaten?: Zutat[];        // nur bei getRecipeById gefüllt (Detail-Ansicht)
+};
+
+import {
+  getAllRecipes as getAllFromDb,
+  getRecipeById as getByIdFromDb,
+  createRecipe as createInDb,
+  deleteRecipe as deleteInDb,
+  addZutatToRecipe as addZutatInDb,
+  updateRecipe as updateInDb,
+} from "./recipe.repo.ts";
 
 export async function getAllRecipes(): Promise<Rezept[]> {
-  return rezepte;
+  return getAllFromDb();
 }
 
 export async function getRecipeById(id: number): Promise<Rezept> {
-  const rezept = rezepte.find((r) => r.id === id);
+  const rezept = await getByIdFromDb(id);
 
   if (!rezept) {
     throw new RecipeNotFoundError(id);
@@ -20,20 +32,42 @@ export async function getRecipeById(id: number): Promise<Rezept> {
   return rezept;
 }
 
-let naechsteId = 3;
-
 export async function createRecipe(daten: Omit<Rezept, "id">): Promise<Rezept> {
   if (!daten.titel || daten.titel.trim() === "") {
     throw new ValidationError("Ein Rezept braucht einen Titel");
   }
-
-  const neues: Rezept = { id: naechsteId++, ...daten };
-  rezepte.push(neues);
-  return neues;
+  return createInDb(daten.titel, daten.minuten, daten.portionen);
 }
 
 export async function deleteRecipe(id: number): Promise<boolean> {
-  const laengeVorher = rezepte.length;
-  rezepte = rezepte.filter((r) => r.id !== id);
-  return rezepte.length < laengeVorher;
-}
+  const existiert = await getByIdFromDb(id);
+  if (!existiert) {
+    return false;
+  }
+  await deleteInDb(id);
+  return true;
+}
+
+// --- BONUS ---
+
+export async function addZutatToRecipe(rezeptId: number, zutatId: number, menge: string): Promise<void> {
+  if (!menge || menge.trim() === "") {
+    throw new ValidationError("Die Menge darf nicht leer sein");
+  }
+  const rezept = await getByIdFromDb(rezeptId);
+  if (!rezept) {
+    throw new RecipeNotFoundError(rezeptId);
+  }
+  await addZutatInDb(rezeptId, zutatId, menge);
+}
+
+export async function updateRecipe(id: number, daten: { titel?: string; minuten?: number; portionen?: number }): Promise<Rezept> {
+  if (daten.titel !== undefined && daten.titel.trim() === "") {
+    throw new ValidationError("Ein Rezept braucht einen Titel");
+  }
+  const aktualisiert = await updateInDb(id, daten);
+  if (!aktualisiert) {
+    throw new RecipeNotFoundError(id);
+  }
+  return aktualisiert;
+}

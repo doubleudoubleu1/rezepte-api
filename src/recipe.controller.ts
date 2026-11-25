@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { getAllRecipes, getRecipeById, createRecipe, deleteRecipe } from "./recipe.service.ts";
+import { getAllRecipes, getRecipeById, createRecipe, deleteRecipe, addZutatToRecipe, updateRecipe } from "./recipe.service.ts";
 
 export async function getRecipesHandler(req: Request, res: Response, next: NextFunction) {
   try {
@@ -38,6 +38,29 @@ export async function deleteRecipeHandler(req: Request, res: Response, next: Nex
       return res.status(404).json({ fehler: "Rezept nicht gefunden" });
     }
     res.status(204).send();             // 204 = No Content, kein Body
+  } catch (err) {
+    next(err);
+  }
+}
+
+// --- BONUS: Zutat zu einem Rezept hinzufügen ---
+export async function addZutatHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    const rezeptId = Number(req.params.id);
+    const { zutatId, menge } = req.body;
+    await addZutatToRecipe(rezeptId, Number(zutatId), menge);
+    res.status(201).json({ ok: true, rezeptId, zutatId, menge });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// --- BONUS: Rezept aktualisieren ---
+export async function updateRecipeHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    const id = Number(req.params.id);
+    const aktualisiert = await updateRecipe(id, req.body);
+    res.json(aktualisiert);
   } catch (err) {
     next(err);
   }
